@@ -1,10 +1,34 @@
 class SongsController < ApplicationController
+
   def index
-    @songs = Song.all
+    if params[:artist_id] #-- if artist foreign key is in url then try to find it in database
+      @artist = Artist.find_by(id: params[:artist_id])
+
+      if @artist.nil? # -- if there is no such artist in database return to the artists page
+        flash[:alert]="Artist not found"
+        redirect_to artists_path
+      else
+        @songs = @artist.songs # if artist is found then makr all songs of the particular artist avaiable to the artist songs index page
+      end
+
+    else
+      @songs = Song.all # if none of the above is successful then make avaiable an array of all the songs in the database
+    end
   end
 
   def show
-    @song = Song.find(params[:id])
+    if params[:artist_id]
+      @artist = Artist.find_by(id: params[:artist_id])
+      @song = @artist.songs.find_by(id: params[:id])
+
+      if @song.nil?
+        flash[:alert]="Song not found"
+        redirect_to artist_songs_path
+      end
+
+    else
+      @song = Song.find(params[:id])
+    end
   end
 
   def new
@@ -17,6 +41,7 @@ class SongsController < ApplicationController
     if @song.save
       redirect_to @song
     else
+
       render :new
     end
   end
@@ -50,4 +75,3 @@ class SongsController < ApplicationController
     params.require(:song).permit(:title, :artist_name)
   end
 end
-
